@@ -3,13 +3,24 @@
 
 #include "DynamicBox.h"
 
-// Sets default values
 ADynamicBox::ADynamicBox()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	//Setting up Static Mesh Component
+	BoxMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BoxMesh"));
+	RootComponent = BoxMesh;
+	
+	Health = 100.0f;
+	Score = 10;
 
+	// Loading a Default Cube Mesh
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("/Engine/BasicShapes/Cube.Cube"));
+	if (CubeMesh.Succeeded())
+	{
+		BoxMesh->SetStaticMesh(CubeMesh.Object);
+	}
 }
+
+
 
 // Called when the game starts or when spawned
 void ADynamicBox::BeginPlay()
@@ -25,3 +36,28 @@ void ADynamicBox::Tick(float DeltaTime)
 
 }
 
+
+void ADynamicBox::InitializeBox(float InitialHealth, int InitialScore, const FVector& Color)
+{
+	Health = InitialHealth;
+	Score = InitialScore;
+
+	// Applying color using Dynamic Material
+	UMaterialInstanceDynamic* DynamicMaterial = BoxMesh->CreateAndSetMaterialInstanceDynamic(0);
+	if (DynamicMaterial)
+	{
+		DynamicMaterial->SetVectorParameterValue(TEXT("BaseColor"), FLinearColor(Color));
+	}
+}
+
+
+float ADynamicBox::TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	Health -= DamageAmount;
+	if (Health <= 0.0f)
+	{
+		Destroy();
+		UE_LOG(LogTemp, Log, TEXT("Box destroyed! Score awarded: %d"), Score);
+	}
+	return Health; 
+}

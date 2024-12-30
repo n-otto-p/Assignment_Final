@@ -12,9 +12,17 @@ class ASSIGNMENT_FINAL_API ADynamicBox : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	ADynamicBox();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes")
+	float Health;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes")
+	int Score;
+
+	// Box mesh
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UStaticMeshComponent* BoxMesh;
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -22,5 +30,7 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	void InitializeBox(float InitialHealth, int InitialScore, const FVector& Color);
+virtual float TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 };
