@@ -47,12 +47,6 @@ void AAssignment_FinalProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* Ot
 	ADynamicBox* Box = Cast<ADynamicBox>(OtherActor);
 	if (Box)
 	{
-		AAssignment_FinalCharacter* Player = Cast<AAssignment_FinalCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-		if (Player)
-		{
-			Player->AddScore(Box->GetScoreValue()); // Assuming ADynamicBox has a function GetScoreValue()
-		}
-
 		Box->TakeDamage(1.0f);
 		Destroy();
 	}

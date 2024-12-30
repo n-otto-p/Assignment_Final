@@ -166,11 +166,10 @@ void AAssignment_FinalGameMode::SpawnDynamicBoxes(const TArray<FBoxType>& BoxTyp
 				// Applying Scale.
 				SpawnedBox->SetActorScale3D(Scale);
 
-				// Set Dynamic Material with Color
+				// Setting Dynamic Material with Color
 				UMaterialInstanceDynamic* DynamicMaterial = SpawnedBox->BoxMesh->CreateAndSetMaterialInstanceDynamic(0);
 				if (DynamicMaterial)
 				{
-					// Assuming the material has a parameter named "BaseColor" for RGB
 					FLinearColor BoxColor(BoxType.Color[0] / 255.0f, BoxType.Color[1] / 255.0f, BoxType.Color[2] / 255.0f, 1.0f);
 					DynamicMaterial->SetVectorParameterValue(TEXT("BaseColor"), BoxColor);
 				}

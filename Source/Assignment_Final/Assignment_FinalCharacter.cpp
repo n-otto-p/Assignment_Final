@@ -37,6 +37,8 @@ AAssignment_FinalCharacter::AAssignment_FinalCharacter()
 	Mesh1P->CastShadow = false;
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
 
+	CurrentScore = 0.0f;
+	
 	//Searching and Initializing ScoreWidgetClass
 	static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/Widgets/W_ScoreWidget.W_ScoreWidget"));
 	if (WidgetClassFinder.Succeeded())
@@ -125,10 +127,10 @@ void AAssignment_FinalCharacter::Look(const FInputActionValue& Value)
 void AAssignment_FinalCharacter::AddScore(float Points)
 {
 	CurrentScore += Points;
-
+	UE_LOG(LogTemp, Log, TEXT("Score Added: %f"), Points);  
 	if (ScoreWidget)
 	{
-		ScoreWidget->UpdateScore(CurrentScore); // Update the UI widget
+		ScoreWidget->UpdateScore(CurrentScore);
 	}
 }
 

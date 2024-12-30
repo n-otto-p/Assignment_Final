@@ -14,7 +14,6 @@ class ASSIGNMENT_FINAL_API UScoreWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	public:
-		// Method to Update Score
 		void UpdateScore(int NewScore);
 
 	protected:

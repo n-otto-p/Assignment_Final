@@ -61,19 +61,15 @@ float ADynamicBox::TakeDamage(float DamageAmount)
 	Health -= DamageAmount;
 	if (Health <= 0.0f)
 	{
-		Destroy();
 		UE_LOG(LogTemp, Log, TEXT("Box destroyed! Score awarded: %d"), Score);
-
-		// Call the function to update score
-		if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+		if (AAssignment_FinalCharacter* PlayerC = Cast<AAssignment_FinalCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn()))
 		{
-			// Assuming you have a method in the player controller or character to update the score
-			AAssignment_FinalCharacter* YourPC = Cast<AAssignment_FinalCharacter>(PlayerController);
-			if (YourPC)
-			{
-				//YourPC->AddScore(Score); // Add the box's score to the player
-			}
+			PlayerC->AddScore(Score);
+			UE_LOG(LogTemp, Log, TEXT("Score after destruction: %f"), PlayerC->CurrentScore); 
 		}
+
+		Destroy();
 	}
-	return Health; 
+
+	return Health;
 }

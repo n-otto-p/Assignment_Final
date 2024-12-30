@@ -32,6 +32,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	float GetScoreValue() const { return Score; }
 	void InitializeBox(float InitialHealth, int InitialScore, const FVector& Color);
-	virtual float TakeDamage(float DamageAmount) ;
+	virtual float TakeDamage(float DamageAmount);
+	void DestroyBox();
 
 };
