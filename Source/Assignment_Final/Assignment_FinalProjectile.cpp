@@ -3,6 +3,8 @@
 #include "Assignment_FinalProjectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
+#include "DynamicBox.h"
+#include "Engine/DamageEvents.h"
 
 AAssignment_FinalProjectile::AAssignment_FinalProjectile() 
 {
@@ -38,6 +40,13 @@ void AAssignment_FinalProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* Ot
 	{
 		OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());
 
+		Destroy();
+	}
+	//Checking if we hit a DynamicBox Actor
+	ADynamicBox* HitBox = Cast<ADynamicBox>(OtherActor);
+	if (HitBox)
+	{
+		HitBox->TakeDamage(1.0f, FDamageEvent(), nullptr, this);
 		Destroy();
 	}
 }
