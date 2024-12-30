@@ -10,6 +10,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Engine/LocalPlayer.h"
+#include "ScoreWidget.h"
+#include "Blueprint/UserWidget.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -34,6 +36,13 @@ AAssignment_FinalCharacter::AAssignment_FinalCharacter()
 	Mesh1P->bCastDynamicShadow = false;
 	Mesh1P->CastShadow = false;
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
+
+	//Searching and Initializing ScoreWidgetClass
+	static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/Widgets/W_ScoreWidget.W_ScoreWidget"));
+	if (WidgetClassFinder.Succeeded())
+	{
+		ScoreWidgetClass = WidgetClassFinder.Class;
+	}
 
 }
 
@@ -98,5 +107,44 @@ void AAssignment_FinalCharacter::Look(const FInputActionValue& Value)
 		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
+	}
+}
+
+// void AAssignment_FinalCharacter::AddScore(int Points)
+// {
+// 	PlayerScore += Points;
+//
+// 	// If ScoreWidget exists, update the UI with the new score
+// 	if (ScoreWidget)
+// 	{
+// 		// Assuming ScoreWidget has a function to update score
+// 		ScoreWidget->UpdateScore(PlayerScore);
+// 	}
+// }
+
+void AAssignment_FinalCharacter::AddScore(float Points)
+{
+	CurrentScore += Points;
+
+	if (ScoreWidget)
+	{
+		ScoreWidget->UpdateScore(CurrentScore); // Update the UI widget
+	}
+}
+
+
+void AAssignment_FinalCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	CurrentScore = 0.0f;
+
+	if (ScoreWidgetClass)
+	{
+		ScoreWidget = CreateWidget<UScoreWidget>(GetWorld(), ScoreWidgetClass);
+		if (ScoreWidget)
+		{
+			ScoreWidget->AddToViewport();
+			ScoreWidget->UpdateScore(CurrentScore);
+		}
 	}
 }

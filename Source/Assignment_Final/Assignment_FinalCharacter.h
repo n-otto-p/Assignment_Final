@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "ScoreWidget.h"
 #include "Assignment_FinalCharacter.generated.h"
 
 class UInputComponent;
@@ -48,6 +49,17 @@ class AAssignment_FinalCharacter : public ACharacter
 public:
 	AAssignment_FinalCharacter();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Score", meta = (AllowPrivateAccess = "true"))
+	float CurrentScore;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UScoreWidget> ScoreWidgetClass;
+
+	UPROPERTY()
+	class UScoreWidget* ScoreWidget;
+
+	void AddScore(float Points);
+	
 protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -66,6 +78,7 @@ public:
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
+	virtual void BeginPlay() override;
 
 };
 

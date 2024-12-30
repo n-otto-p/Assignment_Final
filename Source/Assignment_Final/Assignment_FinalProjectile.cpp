@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Assignment_FinalProjectile.h"
+
+#include "Assignment_FinalCharacter.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
 #include "DynamicBox.h"
@@ -42,11 +44,16 @@ void AAssignment_FinalProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* Ot
 
 		Destroy();
 	}
-	//Checking if we hit a DynamicBox Actor
-	ADynamicBox* HitBox = Cast<ADynamicBox>(OtherActor);
-	if (HitBox)
+	ADynamicBox* Box = Cast<ADynamicBox>(OtherActor);
+	if (Box)
 	{
-		HitBox->TakeDamage(1.0f, FDamageEvent(), nullptr, this);
+		AAssignment_FinalCharacter* Player = Cast<AAssignment_FinalCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
+		if (Player)
+		{
+			Player->AddScore(Box->GetScoreValue()); // Assuming ADynamicBox has a function GetScoreValue()
+		}
+
+		Box->TakeDamage(1.0f);
 		Destroy();
 	}
 }

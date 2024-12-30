@@ -13,5 +13,16 @@ UCLASS()
 class ASSIGNMENT_FINAL_API UScoreWidget : public UUserWidget
 {
 	GENERATED_BODY()
-	
+	public:
+		// Method to Update Score
+		void UpdateScore(int NewScore);
+
+	protected:
+		// Binding to UMG Widget
+		UPROPERTY(meta = (BindWidget))
+		class UTextBlock* ScoreText;
+
+	private:
+		int CurrentScore = 0;
 };
+
