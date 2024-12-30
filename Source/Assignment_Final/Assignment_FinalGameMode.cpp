@@ -8,6 +8,7 @@
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
 #include "Json.h"
+#include "DynamicBox.h"
 
 AAssignment_FinalGameMode::AAssignment_FinalGameMode()
 	: Super()
@@ -49,8 +50,7 @@ void AAssignment_FinalGameMode::OnJSONDataReceived(FHttpRequestPtr Request, FHtt
 	TArray<FBoxType> BoxTypes; 
 	ParseTypes(JsonObject, BoxTypes);
 	ParseObjects(JsonObject, BoxTypes);
-	
-	
+	SpawnDynamicBoxes(BoxTypes);
 }
 
 void AAssignment_FinalGameMode::ParseTypes(const TSharedPtr<FJsonObject>& JsonObject, TArray<FBoxType>& OutBoxTypes)
@@ -142,6 +142,43 @@ void AAssignment_FinalGameMode::ParseObjects(const TSharedPtr<FJsonObject>& Json
 		}
 	}
 }
+
+void AAssignment_FinalGameMode::SpawnDynamicBoxes(const TArray<FBoxType>& BoxTypes)
+{
+	for (const FBoxType& BoxType : BoxTypes)
+	{
+		// Iterating through each objects transform data.
+		for (int32 i = 0; i < BoxType.Locations.Num(); ++i)
+		{
+			FVector Location = BoxType.Locations[i];
+			FRotator Rotation = BoxType.Rotations[i];
+			FVector Scale = BoxType.Scales[i];
+
+			// Spawning Box Actor.
+			FActorSpawnParameters SpawnParams;
+			ADynamicBox* SpawnedBox = GetWorld()->SpawnActor<ADynamicBox>(ADynamicBox::StaticClass(), Location, Rotation, SpawnParams);
+
+			if (SpawnedBox)
+			{
+				// Initializing Box Attributes.
+				SpawnedBox->InitializeBox(BoxType.Health, BoxType.Score, FVector(BoxType.Color[0], BoxType.Color[1], BoxType.Color[2]));
+
+				// Applying Scale.
+				SpawnedBox->SetActorScale3D(Scale);
+
+				// Set Dynamic Material with Color
+				UMaterialInstanceDynamic* DynamicMaterial = SpawnedBox->BoxMesh->CreateAndSetMaterialInstanceDynamic(0);
+				if (DynamicMaterial)
+				{
+					// Assuming the material has a parameter named "BaseColor" for RGB
+					FLinearColor BoxColor(BoxType.Color[0] / 255.0f, BoxType.Color[1] / 255.0f, BoxType.Color[2] / 255.0f, 1.0f);
+					DynamicMaterial->SetVectorParameterValue(TEXT("BaseColor"), BoxColor);
+				}
+			}
+		}
+	}
+}
+
 
 void AAssignment_FinalGameMode::BeginPlay()
 {

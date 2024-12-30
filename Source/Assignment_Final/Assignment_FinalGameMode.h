@@ -50,6 +50,7 @@ public:
 	virtual void BeginPlay() override;
 	static void ParseTypes(const TSharedPtr<FJsonObject>& JsonObject, TArray<FBoxType>& OutBoxTypes);
 	void ParseObjects(const TSharedPtr<FJsonObject>& JsonObject, TArray<FBoxType>& BoxTypes);
+	void SpawnDynamicBoxes(const TArray<FBoxType>& BoxTypes);
 };
 
 

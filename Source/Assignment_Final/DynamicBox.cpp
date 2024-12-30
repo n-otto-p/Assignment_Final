@@ -17,6 +17,12 @@ ADynamicBox::ADynamicBox()
 	{
 		BoxMesh->SetStaticMesh(CubeMesh.Object);
 	}
+	static ConstructorHelpers::FObjectFinder<UMaterial> Material(TEXT("/Game/Static/Materials/M_BoxDynamicColor"));
+	if (Material.Succeeded())
+	{
+		BoxMesh->SetMaterial(0, Material.Object);
+	}
+
 }
 
 
@@ -40,6 +46,12 @@ void ADynamicBox::InitializeBox(float InitialHealth, int InitialScore, const FVe
 {
 	Health = InitialHealth;
 	Score = InitialScore;
+	UMaterialInstanceDynamic* DynamicMaterial = BoxMesh->CreateAndSetMaterialInstanceDynamic(0);
+	if (DynamicMaterial)
+	{
+		FLinearColor BoxColor(Color.X / 255.0f, Color.Y / 255.0f, Color.Z / 255.0f, 1.0f);
+		DynamicMaterial->SetVectorParameterValue(TEXT("BaseColor"), BoxColor);
+	}
 }
 
 
