@@ -31,6 +31,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	void InitializeBox(float InitialHealth, int InitialScore, const FVector& Color);
-virtual float TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	virtual float TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 };

@@ -8,11 +8,10 @@
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
 #include "Json.h"
-#include "DynamicBox.h"
+
 AAssignment_FinalGameMode::AAssignment_FinalGameMode()
 	: Super()
 {
-	// set default pawn class to our Blueprinted character
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnClassFinder(TEXT("/Game/FirstPerson/Blueprints/BP_FirstPersonCharacter"));
 	DefaultPawnClass = PlayerPawnClassFinder.Class;
 
@@ -20,68 +19,128 @@ AAssignment_FinalGameMode::AAssignment_FinalGameMode()
 
 void AAssignment_FinalGameMode::SpawnBoxesFromJSON()
 {
-	FString URL = TEXT("https://raw.githubusercontent.com/CyrusCHAU/Varadise-Technical-Test/refs/heads/main/data.json");  // Replace with your actual URL
+	FString URL = TEXT("https://raw.githubusercontent.com/CyrusCHAU/Varadise-Technical-Test/refs/heads/main/data.json");
 	TSharedRef<IHttpRequest> Request = FHttpModule::Get().CreateRequest();
 
-	// Set up the HTTP request to GET data from the URL
+	//Setting up HTTP to get Data from URL
 	Request->SetURL(URL);
 	Request->SetVerb(TEXT("GET"));
-	Request->OnProcessRequestComplete().BindUObject(this, &AAssignment_FinalGameMode::OnJSONDataReceived);
+	Request->OnProcessRequestComplete().BindUObject(this, &AAssignment_FinalGameMode::OnJSONDataReceived); // Runs when Process Request is Complete.
 	Request->ProcessRequest();
 }
 
 void AAssignment_FinalGameMode::OnJSONDataReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
-	if (bWasSuccessful && Response.IsValid())
-    {
-        FString JsonString = Response->GetContentAsString();  // The raw JSON data
+	if (!bWasSuccessful || !Response.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to fetch the JSON data: HTTP request was unsuccessful or response is invalid."));
+		return;
+	}
+	//Deserializing JsonString into a TSharedPtr.
+	FString JsonString = Response->GetContentAsString();  
+	TSharedPtr<FJsonObject> JsonObject;
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonString);
+	if (!FJsonSerializer::Deserialize(Reader, JsonObject) || !JsonObject.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to fetch the JSON data!"));
+		return;
+	}
+	// Parsing Types and Objects.
+	TArray<FBoxType> BoxTypes; 
+	ParseTypes(JsonObject, BoxTypes);
+	ParseObjects(JsonObject, BoxTypes);
+	
+	
+}
 
-        // Deserialize the JSON string into a TSharedPtr<FJsonObject>
-        TSharedPtr<FJsonObject> JsonObject;
-        TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonString);
-        if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
-        {
-            // Handle the JSON data and spawn boxes
-            TArray<TSharedPtr<FJsonValue>> ObjectsArray = JsonObject->GetArrayField(TEXT("objects"));
-            for (auto& ObjectValue : ObjectsArray)
-            {
-                TSharedPtr<FJsonObject> ObjectObject = ObjectValue->AsObject();
+void AAssignment_FinalGameMode::ParseTypes(const TSharedPtr<FJsonObject>& JsonObject, TArray<FBoxType>& OutBoxTypes)
+{
+	const TArray<TSharedPtr<FJsonValue>>* TypesArray;
+	if (JsonObject->TryGetArrayField(TEXT("types"), TypesArray))
+	{
+		for (const auto& TypeValue : *TypesArray)
+		{
+			TSharedPtr<FJsonObject> TypeObject = TypeValue->AsObject();
+			if (TypeObject.IsValid())
+			{
+				FBoxType BoxType;
+				BoxType.Name = TypeObject->GetStringField(TEXT("name"));
 
-                // Extract data for location, scale, rotation, type, etc.
-                FVector Location = FVector(
-                    ObjectObject->GetArrayField(TEXT("transform"))[0]->AsNumber(),
-                    ObjectObject->GetArrayField(TEXT("transform"))[1]->AsNumber(),
-                    ObjectObject->GetArrayField(TEXT("transform"))[2]->AsNumber()
-                );
+				const TArray<TSharedPtr<FJsonValue>>* ColorArray;
+				if (TypeObject->TryGetArrayField(TEXT("color"), ColorArray))
+				{
+					for (const auto& ColorValue : *ColorArray)
+					{
+						BoxType.Color.Add(ColorValue->AsNumber());
+					}
+				}
 
-                // Parsing Scale
-                FVector Scale = FVector(
-                    ObjectObject->GetArrayField(TEXT("transform"))[3]->AsNumber(),
-                    ObjectObject->GetArrayField(TEXT("transform"))[4]->AsNumber(),
-                    ObjectObject->GetArrayField(TEXT("transform"))[5]->AsNumber()
-                );
+				BoxType.Health = TypeObject->GetIntegerField(TEXT("health"));
+				BoxType.Score = TypeObject->GetIntegerField(TEXT("score"));
+				OutBoxTypes.Add(BoxType);
+			}
+		}
+	}
+}
 
-                // Parsing Rotation (converting from Euler angles to FRotator)
-                FRotator Rotation = FRotator(
-                    ObjectObject->GetArrayField(TEXT("transform"))[6]->AsNumber(),
-                    ObjectObject->GetArrayField(TEXT("transform"))[7]->AsNumber(),
-                    ObjectObject->GetArrayField(TEXT("transform"))[8]->AsNumber()
-                );
+void AAssignment_FinalGameMode::ParseObjects(const TSharedPtr<FJsonObject>& JsonObject, TArray<FBoxType>& BoxTypes)
+{
+	const TArray<TSharedPtr<FJsonValue>>* ObjectsArray;
+	if (JsonObject->TryGetArrayField(TEXT("objects"), ObjectsArray))
+	{
+		for (const auto& ObjectValue : *ObjectsArray)
+		{
+			TSharedPtr<FJsonObject> ObjectObject = ObjectValue->AsObject();
+			if (ObjectObject.IsValid())
+			{
+				// Getting type of object
+				FString ObjectType = ObjectObject->GetStringField(TEXT("type"));
+				
+				FBoxType* MatchingBoxType = BoxTypes.FindByPredicate([&ObjectType](const FBoxType& BoxType)
+				{
+					return BoxType.Name == ObjectType;
+				});
 
-                FString TypeName = ObjectObject->GetStringField(TEXT("type"));
-
-                // Assuming you have a map of box types, fetch the relevant data for this type
-                FBoxTypeData TypeData = BoxTypes[TypeName];
-
-                // Spawn the dynamic box using the extracted data
-                SpawnDynamicBox(Location, Rotation, TypeData.Health, TypeData.Score, TypeData.Color, Scale);
-            }
-        }
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Failed to fetch the JSON data!"));
-    }
+				if (MatchingBoxType)
+				{
+					// Parsing Transform, Location, Rotation and Scale.
+					TSharedPtr<FJsonObject> TransformObject = ObjectObject->GetObjectField(TEXT("transform"));
+					if (TransformObject.IsValid())
+					{
+						const TArray<TSharedPtr<FJsonValue>>* LocationArray;
+						if (TransformObject->TryGetArrayField(TEXT("location"), LocationArray))
+						{
+							FVector Location;
+							Location.X = (*LocationArray)[0]->AsNumber();
+							Location.Y = (*LocationArray)[1]->AsNumber();
+							Location.Z = (*LocationArray)[2]->AsNumber();
+							MatchingBoxType->Locations.Add(Location);
+						}
+						
+						const TArray<TSharedPtr<FJsonValue>>* RotationArray;
+						if (TransformObject->TryGetArrayField(TEXT("rotation"), RotationArray))
+						{
+							FRotator Rotation;
+							Rotation.Roll = (*RotationArray)[0]->AsNumber();
+							Rotation.Pitch = (*RotationArray)[1]->AsNumber();
+							Rotation.Yaw = (*RotationArray)[2]->AsNumber();
+							MatchingBoxType->Rotations.Add(Rotation);
+						}
+						
+						const TArray<TSharedPtr<FJsonValue>>* ScaleArray;
+						if (TransformObject->TryGetArrayField(TEXT("scale"), ScaleArray))
+						{
+							FVector Scale;
+							Scale.X = (*ScaleArray)[0]->AsNumber();
+							Scale.Y = (*ScaleArray)[1]->AsNumber();
+							Scale.Z = (*ScaleArray)[2]->AsNumber();
+							MatchingBoxType->Scales.Add(Scale);
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void AAssignment_FinalGameMode::BeginPlay()
@@ -91,17 +150,4 @@ void AAssignment_FinalGameMode::BeginPlay()
 	UE_LOG(LogTemp, Display, TEXT("BeginPlay runs"));
 }
 
-void AAssignment_FinalGameMode::SpawnDynamicBox(const FVector& Location, const FRotator& Rotation, float Health, int32 Score, const FColor& Color, const FVector& Scale)
-{
-	UWorld* World = GetWorld();
-	if (World)
-	{
-		// Spawn a box actor
-		ADynamicBox* Box = World->SpawnActor<ADynamicBox>(ADynamicBox::StaticClass(), Location, Rotation);
-		if (Box)
-		{
-			Box->SetActorScale3D(Scale);
-			Box->InitializeBox(Health, Score, FVector(Color.R, Color.G, Color.B));
-		}
-	}
-}
+

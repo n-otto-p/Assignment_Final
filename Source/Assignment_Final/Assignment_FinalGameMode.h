@@ -7,42 +7,49 @@
 #include "HttpFwd.h"
 #include "Assignment_FinalGameMode.generated.h"
 
-class ADynamicBox;
-
-USTRUCT(BlueprintType)
-struct FBoxTypeData
+USTRUCT(BlueprintType) //Struct to hold Parsed Data.
+struct FBoxType
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Box Data")
+	UPROPERTY()
+	FString Name;
+
+	UPROPERTY()
+	TArray<int32> Color;
+
+	UPROPERTY()
 	int32 Health;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Box Data")
+	UPROPERTY()
 	int32 Score;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Box Data")
-	FColor Color;
+	// Transform Data from here.
+	UPROPERTY()
+	TArray<FVector> Locations;
 
-	FBoxTypeData()
-		: Health(100), Score(10), Color(FColor::White) {}
+	UPROPERTY()
+	TArray<FRotator> Rotations;
+
+	UPROPERTY()
+	TArray<FVector> Scales;
 };
+
 
 UCLASS(minimalapi)
 class AAssignment_FinalGameMode : public AGameModeBase
 {
+	
 	GENERATED_BODY()
 
 public:
 	
 	AAssignment_FinalGameMode();
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Box Types")
-	TMap<FString, FBoxTypeData> BoxTypes;  // BoxTypes is defined here using FBoxTypeData
-
 	void SpawnBoxesFromJSON();
 	void OnJSONDataReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 	virtual void BeginPlay() override;
-	UFUNCTION(BlueprintCallable, Category = "GameMode")
-	void SpawnDynamicBox(const FVector& Location, const FRotator& Rotation, float Health, int32 Score, const FColor& Color, const FVector& Scale);
+	static void ParseTypes(const TSharedPtr<FJsonObject>& JsonObject, TArray<FBoxType>& OutBoxTypes);
+	void ParseObjects(const TSharedPtr<FJsonObject>& JsonObject, TArray<FBoxType>& BoxTypes);
 };
 
 

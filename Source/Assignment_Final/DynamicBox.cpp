@@ -8,7 +8,6 @@ ADynamicBox::ADynamicBox()
 	//Setting up Static Mesh Component
 	BoxMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BoxMesh"));
 	RootComponent = BoxMesh;
-	
 	Health = 100.0f;
 	Score = 10;
 
@@ -37,17 +36,10 @@ void ADynamicBox::Tick(float DeltaTime)
 }
 
 
-void ADynamicBox::InitializeBox(float InitialHealth, int InitialScore, const FVector& Color)
+void ADynamicBox::InitializeBox(float InitialHealth, int InitialScore, const FVector& Color) // Color not considered yet.
 {
 	Health = InitialHealth;
 	Score = InitialScore;
-
-	// Applying color using Dynamic Material
-	UMaterialInstanceDynamic* DynamicMaterial = BoxMesh->CreateAndSetMaterialInstanceDynamic(0);
-	if (DynamicMaterial)
-	{
-		DynamicMaterial->SetVectorParameterValue(TEXT("BaseColor"), FLinearColor(Color));
-	}
 }
 
 
@@ -57,7 +49,7 @@ float ADynamicBox::TakeDamage(float DamageAmount, const FDamageEvent& DamageEven
 	if (Health <= 0.0f)
 	{
 		Destroy();
-		UE_LOG(LogTemp, Log, TEXT("Box destroyed! Score awarded: %d"), Score);
+		UE_LOG(LogTemp, Log, TEXT("Box destroyed! Score awarded: %d"), Score); // Have to connect to Main Score and Add Later on.
 	}
 	return Health; 
 }
